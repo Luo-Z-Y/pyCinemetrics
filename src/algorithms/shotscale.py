@@ -7,7 +7,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from collections import Counter
 
-from src.algorithms.shotscaleconfig import *
+from algorithms.shotscaleconfig import *
+
 
 class shotscale(object):
 
@@ -60,34 +61,41 @@ class shotscale(object):
             # print("Keypoints - {} : {}".format(self.point_names[part], keypoints))
             keypoint_with_id = []
             for i in range(len(keypoints)):
-                points_table.append(keypoints[i] + (keypoint_id,) + (self.point_names[part],))
+                points_table.append(
+                    keypoints[i] + (keypoint_id,) + (self.point_names[part],))
                 # 给每个关键点赋予一个唯一的ID
                 keypoint_with_id.append(keypoints[i] + (keypoint_id,))
                 # print("keypoint_with_id", keypoint_with_id)
                 # 存储所有检测到的关键点的位置信息，每个关键点一行
-                keypoints_list = np.vstack([keypoints_list, keypoints[i]])  # 用于生成完整的人体姿态关键点信息
+                keypoints_list = np.vstack(
+                    [keypoints_list, keypoints[i]])  # 用于生成完整的人体姿态关键点信息
                 # print("keypoints_list", keypoints_list)
                 keypoint_id += 1
 
             detected_keypoints.append(keypoint_with_id)  # 用于确定有效的关键点对
 
         # print("detected_keypoints", detected_keypoints)
-        valid_paris, invalid_pairs = self.getValidPairs(output, detected_keypoints, width, height)
+        valid_paris, invalid_pairs = self.getValidPairs(
+            output, detected_keypoints, width, height)
         # print("valid_paris", valid_paris)
         # print("invalid_pairs", invalid_pairs)
         # 使用有效关键点对，计算出完整的人体姿态关键点信息
         # personwiseKeypoints是一个二维数组，其中每一行表示一个人体姿态，每列对应一个关键点或得分
         # 每个行（每个姿态）中的前self.num_points列对应一个关键点的索引（如：鼻子、左肩、右肩等），值表示相应关键点的检测到的关键点的ID
         # 每行中的最后一列表示该姿态的累积得分，由连接的关键点的概率和连接得分的累积组成，这个得分可以用来度量人体姿态的置信度
-        personwiseKeypoints = self.getPersonwiseKeypoints(valid_paris, invalid_pairs, keypoints_list)
+        personwiseKeypoints = self.getPersonwiseKeypoints(
+            valid_paris, invalid_pairs, keypoints_list)
         # print("personwiseKeypoints", personwiseKeypoints)
         img = self.vis_pose(imgfile, personwiseKeypoints, keypoints_list)
         FPS = math.ceil(1 / (time.time() - start))
 
-        key_parts, min_y, max_y = self.detect_key_person(personwiseKeypoints, points_table)
+        key_parts, min_y, max_y = self.detect_key_person(
+            personwiseKeypoints, points_table)
         type = self.shotsize(key_parts, min_y, max_y, height)
-        img = cv2.putText(img, "FPS:" + str(int(FPS)), (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        img = cv2.putText(img, "ShotSize:" + str(type), (25, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        img = cv2.putText(img, "FPS:" + str(int(FPS)), (25, 50),
+                          cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        img = cv2.putText(img, "ShotSize:" + str(type), (25, 100),
+                          cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
         return img, type, len(personwiseKeypoints)
 
@@ -98,7 +106,8 @@ class shotscale(object):
         keypoints = []
 
         # 找到关键点的连通区域，每个区域中概率最大的位置作为关键点位置
-        contours, hierarchy = cv2.findContours(mapMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(
+            mapMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         for cnt in contours:
             blobMask = np.zeros(mapMask.shape)
             blobMask = cv2.fillConvexPoly(blobMask, cnt, 1)
@@ -165,7 +174,8 @@ class shotscale(object):
                                 found = 1
                     # Append the connection to the list
                     if found:
-                        valid_pair = np.append(valid_pair, [[candA[i][3], candB[max_j][3], maxScore]], axis=0)
+                        valid_pair = np.append(
+                            valid_pair, [[candA[i][3], candB[max_j][3], maxScore]], axis=0)
 
                 # Append the detected connections to the global list
                 valid_pairs.append(valid_pair)
@@ -201,14 +211,15 @@ class shotscale(object):
                     if found:
                         personwiseKeypoints[person_idx][indexB] = partBs[i]
                         personwiseKeypoints[person_idx][-1] += keypoints_list[partBs[i].astype(int), 2] + \
-                                                               valid_pairs[k][i][2]
+                            valid_pairs[k][i][2]
                     elif not found and k < self.num_points - 1:
                         row = -1 * np.ones(self.num_points + 1)
                         row[indexA] = partAs[i]
                         row[indexB] = partBs[i]
                         row[-1] = sum(keypoints_list[valid_pairs[k][i, :2].astype(int), 2]) + \
-                                  valid_pairs[k][i][2]
-                        personwiseKeypoints = np.vstack([personwiseKeypoints, row])
+                            valid_pairs[k][i][2]
+                        personwiseKeypoints = np.vstack(
+                            [personwiseKeypoints, row])
         return personwiseKeypoints
 
     # 关键点连接后的可视化
@@ -223,7 +234,8 @@ class shotscale(object):
                 A = np.int32(keypoints_list[index.astype(int), 1])
                 # print("B", B)
                 # print("A", A)
-                cv2.line(img, (B[0], A[0]), (B[1], A[1]), self.colors[i], 3, cv2.LINE_AA)
+                cv2.line(img, (B[0], A[0]), (B[1], A[1]),
+                         self.colors[i], 3, cv2.LINE_AA)
         # img = cv2.resize(img, (480, 640))
         return img
 
@@ -278,7 +290,8 @@ class shotscale(object):
             body_parts = set(key_parts)
             head_parts = {'Nose', 'REye', 'LEye', 'REar', 'LEar'}
             chest_below_parts = {'MidHip', 'RHip', 'LHip', 'RKnee', 'LKnee'}
-            feet_parts = {'RAnkle', 'LAnkle', 'RHeel', 'LHeel', 'RBigToe', 'LBigToe', 'RSmallToe', 'LSmallToe'}
+            feet_parts = {'RAnkle', 'LAnkle', 'RHeel', 'LHeel',
+                          'RBigToe', 'LBigToe', 'RSmallToe', 'LSmallToe'}
             if body_parts.intersection(head_parts) and body_parts.intersection(feet_parts):
                 if (max_y - min_y) <= height / 2:
                     return "Long Shot"  # 远景
@@ -305,7 +318,8 @@ class shotscale(object):
             writer.writerow(name)
             # data为list类型
             for i in range(len(detectInfo)):
-                writer.writerow([detectInfo[i][0], detectInfo[i][1], detectInfo[i][2]])
+                writer.writerow(
+                    [detectInfo[i][0], detectInfo[i][1], detectInfo[i][2]])
         finally:
             shotscale_csv.close()
 
@@ -314,7 +328,8 @@ class shotscale(object):
         # 饼图
         categories = [item[1] for item in detectInfo]
         category_counts = Counter(categories)
-        sizes = [(count / len(categories)) * 100 for count in category_counts.values()]
+        sizes = [(count / len(categories)) *
+                 100 for count in category_counts.values()]
         labels = list(category_counts.keys())
 
         inner_radius = 0.5

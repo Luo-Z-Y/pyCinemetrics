@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 
-#三个方法
+# 三个方法
+
+
 class WordCloud2Frame:
     def __init__(self):
         pass
-    def wordfrequency(self,filename):
-        #data = np.loadtxt(open(csvfile, "rb"),  skiprows=1, usecols=[1, 1])
+
+    def wordfrequency(self, filename):
+        # data = np.loadtxt(open(csvfile, "rb"),  skiprows=1, usecols=[1, 1])
         print(filename)
         data = []
         with open(filename) as csvfile:
@@ -20,14 +23,14 @@ class WordCloud2Frame:
                 data.append(row[1])  # 选择某一列加入到data数组中
             print(data)
 
-        data1=[]
+        data1 = []
         for i in data:
-            data1.append(i.replace(", ",",").replace(" ",""))
+            data1.append(i.replace(", ", ",").replace(" ", ""))
         print(data1)
 
-        allstr=""
+        allstr = ""
         for d in data1:
-            allstr=allstr+' '+d
+            allstr = allstr+' '+d
         print(allstr)
         seg_list = jieba.cut(allstr, cut_all=False)
         print(seg_list)
@@ -42,9 +45,9 @@ class WordCloud2Frame:
         #     stopword = ft.read()
 
         for seg in ci:
-            if tf[seg] < 1 or len(seg) < 0 or "一" in seg or "," in seg or ";" in seg or " " in seg:  #or seg in stopword
+            # or seg in stopword
+            if tf[seg] < 1 or len(seg) < 0 or "一" in seg or "," in seg or ";" in seg or " " in seg:
                 tf.pop(seg)
-
 
         ci, num, data = list(tf.keys()), list(tf.values()), []
         for i in range(len(tf)):
@@ -57,10 +60,10 @@ class WordCloud2Frame:
 
         for i in range(len(data)):
             tf_sorted[data[i][1]] = data[i][0]
-        print('tfsorted',tf_sorted)
+        print('tfsorted', tf_sorted)
         return tf_sorted
 
-    def wordfrequencyStr(self,datastr):
+    def wordfrequencyStr(self, datastr):
         datastr = datastr.replace("\n", "")
         seg_list = jieba.cut(datastr, cut_all=False)
         tf = {}
@@ -74,7 +77,8 @@ class WordCloud2Frame:
         #     stopword = ft.read()
 
         for seg in ci:
-            if tf[seg] < 1 or len(seg) < 0 or "一" in seg  or " " in seg  or ";" in seg or "-" in seg:  #or seg in stopword
+            # or seg in stopword
+            if tf[seg] < 1 or len(seg) < 0 or "一" in seg or " " in seg or ";" in seg or "-" in seg:
                 tf.pop(seg)
 
         print(tf)
@@ -93,19 +97,20 @@ class WordCloud2Frame:
         print(tf_sorted)
         return tf_sorted
 
-
-    def plotwordcloud(self,tf_sorted,save_path,save_type):
-        print('save_path,save_type',save_path,save_type)
-        font=r'c:\Windows\Fonts\simfang.ttf'
-        wc=WordCloud(font_path=font,width=800,height=600,background_color='white').generate_from_frequencies(tf_sorted)
+    def plotwordcloud(self, tf_sorted, save_path, save_type):
+        print('save_path,save_type', save_path, save_type)
+        font = r'c:\Windows\Fonts\simfang.ttf'
+        wc = WordCloud(font_path=font, width=800, height=600,
+                       background_color='white').generate_from_frequencies(tf_sorted)
         plt.clf()
         plt.axes(facecolor='black')
         # plt.style.use("dark_background")
         plt.imshow(wc)
         plt.axis('off')
         # plt.show()
-        plt.savefig(save_path+save_type+".png",color='white')
+        plt.savefig(save_path+save_type+".png", color='white')
         # wc.to_file(save_type+'.png')
+
 
 if __name__ == '__main__':
     # 定义要创建的目录路径
@@ -114,5 +119,6 @@ if __name__ == '__main__':
     # 使用os.makedirs()创建目录（包括父目录）
     os.makedirs(directory_path, exist_ok=True)
     wc2f = WordCloud2Frame()
-    tf = wc2f.wordfrequency("E:/CBD-lab/video-clientNew/img/yiyihappy/objects.csv")
+    tf = wc2f.wordfrequency(
+        "E:/CBD-lab/video-clientNew/img/yiyihappy/objects.csv")
     wc2f.plotwordcloud(tf, directory_path, "/objects")

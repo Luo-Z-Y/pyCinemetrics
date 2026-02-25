@@ -1,26 +1,27 @@
 import functools
 
-from PySide2.QtGui import QPixmap
-from PySide2.QtWidgets import (
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import (
     QDockWidget, QPushButton, QLabel, QFileDialog, QSlider, QMessageBox, QVBoxLayout,
     QWidget, QGridLayout
 )
-from PySide2.QtCore import Qt
-from src.algorithms.objectDetection import ObjectDetection
-from src.algorithms.resultsave import resultsave
-from src.algorithms.shotscale import shotscale
-from src.algorithms.subtitleEasyOcr import *
-from src.algorithms.shotcutTransNetV2 import transNetV2_run
-from src.algorithms.subtitleEasyOcr import SubtitleProcessor
-from src.algorithms.img2Colors import ColorAnalysis
+from PySide6.QtCore import Qt
+from algorithms.objectDetection import ObjectDetection
+from algorithms.resultsave import resultsave
+from algorithms.shotscale import shotscale
+from algorithms.subtitleEasyOcr import *
+from algorithms.shotcutTransNetV2 import transNetV2_run
+from algorithms.subtitleEasyOcr import SubtitleProcessor
+from algorithms.img2Colors import ColorAnalysis
+
 
 class Control(QDockWidget):
-    def __init__(self, parent,filename):
+    def __init__(self, parent, filename):
         super().__init__('Control', parent)
         self.parent = parent
-        self.filename=filename
-        self.AnalyzeImg=""
-        self.AnalyzeImgPath=""
+        self.filename = filename
+        self.AnalyzeImg = ""
+        self.AnalyzeImgPath = ""
         self.parent.filename_changed.connect(self.on_filename_changed)
         # self.video_info_loaded.connect(self.update_table)
         self.th = 0.35
@@ -73,7 +74,6 @@ class Control(QDockWidget):
             "5", self)
         self.labelSubtitlevalue = QLabel("48", self)
 
-
         # shotcut下载按钮
         self.download_shotcut_button = QPushButton(".csv", self)
         self.download_shotcut_button.clicked.connect(
@@ -101,35 +101,42 @@ class Control(QDockWidget):
         )
 
         # 创建一个网格布局，并将进度条和标签添加到网格中
-        grid_layout.addWidget(self.shotcut,0,0)
-        grid_layout.addWidget(self.colors,1,0)
-        grid_layout.addWidget(self.objects,2,0)
-        grid_layout.addWidget(self.subtitleBtn,3,0)
-        grid_layout.addWidget(self.shotscale,4,0)
+        grid_layout.addWidget(self.shotcut, 0, 0)
+        grid_layout.addWidget(self.colors, 1, 0)
+        grid_layout.addWidget(self.objects, 2, 0)
+        grid_layout.addWidget(self.subtitleBtn, 3, 0)
+        grid_layout.addWidget(self.shotscale, 4, 0)
 
         grid_layout.addWidget(self.colorsSlider, 1, 1)  # 第一行，第二列
         grid_layout.addWidget(self.labelColors, 1, 2)  # 第一行，第三列
         grid_layout.addWidget(self.subtitleSlider, 3, 1)  # 第二行，第二列
         grid_layout.addWidget(self.labelSubtitlevalue, 3, 2)  # 第二行，第三列
 
-        grid_layout.addWidget(self.download_shotcut_button,0,3)
-        grid_layout.addWidget(self.download_color_button,1,3)
-        grid_layout.addWidget(self.download_object_button,2,3)
-        grid_layout.addWidget(self.download_subtitle_button,3,3)
-        grid_layout.addWidget(self.download_shotscale_button,4,3)
+        grid_layout.addWidget(self.download_shotcut_button, 0, 3)
+        grid_layout.addWidget(self.download_color_button, 1, 3)
+        grid_layout.addWidget(self.download_object_button, 2, 3)
+        grid_layout.addWidget(self.download_subtitle_button, 3, 3)
+        grid_layout.addWidget(self.download_shotscale_button, 4, 3)
 
         # 创建一个QWidget，将主布局设置为这个QWidget的布局
         widget = QWidget()
         widget.setLayout(grid_layout)
         self.setWidget(widget)
-    def on_filename_changed(self,filename):
-        self.filename=filename
+
+    def on_filename_changed(self, filename):
+        self.filename = filename
+
     def shotcut_transNetV2(self):
         self.v_path = self.filename  # 视频路径
-        self.frame_save = "./img/" + str(os.path.basename(self.v_path)[0:-4]) + "/frame"  # 图片存储路径
-        self.image_save = "./img/" + str(os.path.basename(self.v_path)[0:-4])
+        # Use absolute path to the project root img directory
+        project_root = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        img_base = os.path.join(project_root, "img", str(
+            os.path.basename(self.v_path)[0:-4]))
+        self.frame_save = os.path.join(img_base, "frame")  # 图片存储路径
+        self.image_save = img_base
         shot_len = transNetV2_run(self.v_path, self.image_save, self.th)
-        rs=resultsave(self.image_save+"/")
+        rs = resultsave(self.image_save+"/")
         rs.plot_transnet_shotcut(shot_len)
         rs.diff_csv(0, shot_len)
         self.parent.shot_finished.emit()
@@ -143,11 +150,16 @@ class Control(QDockWidget):
 
     def colorAnalyze(self):
         imgpath = os.path.basename(self.filename)[0:-4]
-        coloranalysis=ColorAnalysis("")
+        coloranalysis = ColorAnalysis("")
         coloranalysis.imgColors(imgpath, self.colorsC)
 
-        self.AnalyzeImg = QPixmap("img/" + imgpath + "/" + "colors.png")
-        self.AnalyzeImgPath = "img/" + imgpath + "/" + "colors.png"
+        # Use absolute path to the project root img directory
+        project_root = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        colors_png_path = os.path.join(
+            project_root, "img", imgpath, "colors.png")
+        self.AnalyzeImg = QPixmap(colors_png_path)
+        self.AnalyzeImgPath = colors_png_path
         self.AnalyzeImg = self.AnalyzeImg.scaled(
             250, 160)
         self.parent.analyze.labelAnalyze.setPixmap(self.AnalyzeImg)
@@ -156,9 +168,15 @@ class Control(QDockWidget):
 
     def object_detect(self):
         imgpath = os.path.basename(self.filename)[0:-4]
-        objectdetection=ObjectDetection(r"./img/" + imgpath)
-        self.AnalyzeImg = QPixmap("img/" + imgpath + "/objects.png")
-        self.AnalyzeImgPath = "img/" + imgpath + "/objects.png"
+        # Use absolute path to the project root img directory
+        project_root = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        img_dir = os.path.join(project_root, "img", imgpath)
+        objectdetection = ObjectDetection(img_dir)
+        objects_png_path = os.path.join(
+            project_root, "img", imgpath, "objects.png")
+        self.AnalyzeImg = QPixmap(objects_png_path)
+        self.AnalyzeImgPath = objects_png_path
         self.AnalyzeImg = self.AnalyzeImg.scaled(
             250, 160)
         # print(self.AnalyzeImgPath)
@@ -168,9 +186,13 @@ class Control(QDockWidget):
 
     def getsubtitles(self, filename):
         imgpath = os.path.basename(self.filename)[0:-4]
-        save_path = r"./img/" + imgpath + "/"
-        subtitleprocesser=SubtitleProcessor()
-        subtitleStr, subtitleList = subtitleprocesser.getsubtitleEasyOcr(self.filename, save_path, self.subtitleValue)
+        # Use absolute path to the project root img directory
+        project_root = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        save_path = os.path.join(project_root, "img", imgpath) + "/"
+        subtitleprocesser = SubtitleProcessor()
+        subtitleStr, subtitleList = subtitleprocesser.getsubtitleEasyOcr(
+            self.filename, save_path, self.subtitleValue)
         # print("显示字幕结果", subtitleStr)
         subtitleprocesser.subtitle2Srt(subtitleList, save_path)
         self.parent.subtitle.textSubtitle.setPlainText(subtitleStr)
@@ -178,8 +200,10 @@ class Control(QDockWidget):
         self.v_path = self.filename  # 视频路径
         self.parent.shot_finished.emit()
 
-        self.AnalyzeImg = QPixmap("img/" + imgpath + "/" + "subtitle.png")
-        self.AnalyzeImgPath = "img/" + imgpath + "/" + "subtitle.png"
+        subtitle_png_path = os.path.join(
+            project_root, "img", imgpath, "subtitle.png")
+        self.AnalyzeImg = QPixmap(subtitle_png_path)
+        self.AnalyzeImgPath = subtitle_png_path
         self.AnalyzeImg = self.AnalyzeImg.scaled(
             250, 160)
         self.parent.analyze.labelAnalyze.setPixmap(self.AnalyzeImg)
@@ -187,13 +211,19 @@ class Control(QDockWidget):
         # self.toggle_button.setVisible(False)  # 初始时不显示按钮
 
     def getshotscale(self):
-        image_save = "./img/" + str(os.path.basename(self.filename)[0:-4]) + "/"
-        self.frame_save = "./img/" + str(os.path.basename(self.filename)[0:-4]) + "/frame/"  # 图片存储路径
+        # Use absolute path to the project root img directory
+        project_root = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        imgpath = str(os.path.basename(self.filename)[0:-4])
+        image_save = os.path.join(project_root, "img", imgpath) + "/"
+        self.frame_save = os.path.join(
+            project_root, "img", imgpath, "frame") + "/"  # 图片存储路径
         ss = shotscale(25)
 
         csv_file = image_save + "shotscale.csv"
         if not os.path.exists(csv_file):
-            image_files = [f for f in os.listdir(self.frame_save) if f.endswith((".jpg", ".jpeg", ".png"))]
+            image_files = [f for f in os.listdir(
+                self.frame_save) if f.endswith((".jpg", ".jpeg", ".png"))]
             print(self.frame_save)
             result = []
             for img in image_files:
@@ -203,7 +233,8 @@ class Control(QDockWidget):
                 # cv2.waitKey(0)
                 # cv2.destroyAllWindows()
                 print("Detected People:", num)
-                frame_id = img.replace("frame", "").replace(".jpg", "").replace(".jpeg", "").replace(".png", "")
+                frame_id = img.replace("frame", "").replace(
+                    ".jpg", "").replace(".jpeg", "").replace(".png", "")
                 result.append([frame_id, type, num])
             ss.shotscale_csv(result, image_save)
 
@@ -249,21 +280,29 @@ class Control(QDockWidget):
     #     self.labelThSlider.setText(str(self.th))
 
     def colorChange(self):
-        print("current Color Category slider value:"+str(self.colorsSlider.value()))
-        self.colorsC= self.colorsSlider.value()
+        print("current Color Category slider value:" +
+              str(self.colorsSlider.value()))
+        self.colorsC = self.colorsSlider.value()
         self.labelColors.setText(str(self.colorsC))
+
     def subtitleChange(self):
-        print("current subtitle Category slider value:" + str(self.subtitleSlider.value()))
+        print("current subtitle Category slider value:" +
+              str(self.subtitleSlider.value()))
         self.subtitleValue = self.subtitleSlider.value()
         self.labelSubtitlevalue.setText(str(self.subtitleValue))
-    def download_resources(self,directory,file_name):
+
+    def download_resources(self, directory, file_name):
         # 在这里编写复制资源的代码
         # 你需要将指定的资源文件复制到用户选择的 save_path
         # 例如：
         import shutil
         imgpath = os.path.basename(self.filename)[0:-4]
-        resource_path ='./img/'+imgpath+"/"+file_name
+        # Use absolute path to the project root img directory
+        project_root = os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))))
+        resource_path = os.path.join(project_root, "img", imgpath, file_name)
         destination_path = os.path.join(directory, file_name)
         shutil.copy(resource_path, destination_path)
 
-        QMessageBox.information(self, "Download", "Resource downloaded successfully!")
+        QMessageBox.information(
+            self, "Download", "Resource downloaded successfully!")

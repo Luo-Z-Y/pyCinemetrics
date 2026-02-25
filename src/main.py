@@ -1,10 +1,11 @@
 import os
 import sys
 # from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import (
-    QApplication, QMainWindow, QAction, QMessageBox, QProgressBar
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QMessageBox, QProgressBar
 )
-from PySide2.QtCore import Qt, Signal
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, Signal
 from ui.timeline import Timeline
 from ui.info import Info
 from ui.analyze import Analyze
@@ -22,18 +23,18 @@ from ui.control import Control
 class MainWindow(QMainWindow):
     filename_changed = Signal(str)
     shot_finished = Signal()
-    video_play_changed= Signal(int)
+    video_play_changed = Signal(int)
 
     def __init__(self):
         super().__init__()
         self.threadpool = ThreadPoolExecutor()
         self.filename = ''
 
-        self.AnalyzeImgPath=''
+        self.AnalyzeImgPath = ''
         self.init_ui()
 
     def init_ui(self):
-        #self.setWindowIcon(QIcon(resource_path('resources/icon.ico')))
+        # self.setWindowIcon(QIcon(resource_path('resources/icon.ico')))
 
         # Delay VLC import to here
         self.player = VLCPlayer(self)
@@ -42,18 +43,17 @@ class MainWindow(QMainWindow):
         self.info = Info(self)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.info)
 
-        self.subtitle = Subtitle(self,self.filename)
+        self.subtitle = Subtitle(self, self.filename)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.subtitle)
 
-        self.control = Control(self,self.filename)
+        self.control = Control(self, self.filename)
         self.addDockWidget(Qt.RightDockWidgetArea, self.control)
 
-        self.analyze = Analyze(self,self.filename)
+        self.analyze = Analyze(self, self.filename)
         self.addDockWidget(Qt.RightDockWidgetArea, self.analyze)
 
-        self.timeline = Timeline(self,self.control.colorsC)
+        self.timeline = Timeline(self, self.control.colorsC)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.timeline)
-
 
         menu = self.menuBar()
 
@@ -69,12 +69,14 @@ class MainWindow(QMainWindow):
         help_menu = menu.addMenu('&Help')
         manual_action = QAction('&Manual', self)
         manual_action.triggered.connect(
-            lambda: QMessageBox.about(self, ' CCKS Cinemetrics V0.1',' 1-Open Video Play(VLC)\n 2-ShotCut(aHash)\n 3-Color Analyze(Kmeans)\n 4-Subtitle(OCR)\n 5-Object Detection(VGG19)\n 6-Field of view(OpenPose)\n')
+            lambda: QMessageBox.about(
+                self, ' CCKS Cinemetrics V0.1', ' 1-Open Video Play(VLC)\n 2-ShotCut(aHash)\n 3-Color Analyze(Kmeans)\n 4-Subtitle(OCR)\n 5-Object Detection(VGG19)\n 6-Field of view(OpenPose)\n')
         )
 
         about_action = QAction('&About', self)
         about_action.triggered.connect(
-            lambda: QMessageBox.about(self, 'CCKS Cinemetrics', 'CCKS Cinemetrics V0.1 \nHttp://movie.yingshinet.com')
+            lambda: QMessageBox.about(
+                self, 'CCKS Cinemetrics', 'CCKS Cinemetrics V0.1 \nHttp://movie.yingshinet.com')
         )
         help_menu.addAction(manual_action)
         help_menu.addAction(about_action)

@@ -1,12 +1,12 @@
-from PySide2.QtGui import QPixmap
-from PySide2.QtWidgets import (
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import (
     QDockWidget, QLabel, QDialog, QVBoxLayout
 )
-from PySide2.QtCore import Qt
+from PySide6.QtCore import Qt
 
 
 class Analyze(QDockWidget):
-    def __init__(self,parent,filename):
+    def __init__(self, parent, filename):
         super().__init__('Analyze', parent)
         self.parent = parent
         self.filename = filename
@@ -15,9 +15,10 @@ class Analyze(QDockWidget):
 
     def init_analyze(self):
         self.labelAnalyze = QLabel("", self)
-        self.labelAnalyze.setGeometry(60, 20, 300,250)
+        self.labelAnalyze.setGeometry(60, 20, 300, 250)
         self.labelAnalyze.mousePressEvent = self.on_analyze_image_click
-    def on_filename_changed(self,filename):
+
+    def on_filename_changed(self, filename):
         self.labelAnalyze.setPixmap(QPixmap())
 
     def on_analyze_image_click(self, event):

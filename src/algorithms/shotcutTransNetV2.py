@@ -8,9 +8,11 @@ class TransNetV2:
 
     def __init__(self, model_dir=None):
         if model_dir is None:
-            model_dir = os.path.join(os.path.dirname(__file__), "../../models/transnetv2-weights/")
+            model_dir = os.path.join(os.path.dirname(
+                __file__), "../../models/transnetv2-weights/")
             if not os.path.isdir(model_dir):
-                raise FileNotFoundError(f"[TransNetV2] ERROR: {model_dir} is not a directory.")
+                raise FileNotFoundError(
+                    f"[TransNetV2] ERROR: {model_dir} is not a directory.")
             else:
                 print(f"[TransNetV2] Using weights from {model_dir}.")
 
@@ -41,12 +43,14 @@ class TransNetV2:
             # return windows of size 100 where the first/last 25 frames are from the previous/next batch
             # the first and last window must be padded by copies of the first and last frame of the video
             no_padded_frames_start = 25
-            no_padded_frames_end = 25 + 50 - (len(frames) % 50 if len(frames) % 50 != 0 else 50)  # 25 - 74
+            no_padded_frames_end = 25 + 50 - \
+                (len(frames) % 50 if len(frames) % 50 != 0 else 50)  # 25 - 74
 
             start_frame = np.expand_dims(frames[0], 0)
             end_frame = np.expand_dims(frames[-1], 0)
             padded_inputs = np.concatenate(
-                [start_frame] * no_padded_frames_start + [frames] + [end_frame] * no_padded_frames_end, 0
+                [start_frame] * no_padded_frames_start +
+                [frames] + [end_frame] * no_padded_frames_end, 0
             )
 
             ptr = 0
@@ -67,10 +71,13 @@ class TransNetV2:
             ), end="")
         print("")
 
-        single_frame_pred = np.concatenate([single_ for single_, all_ in predictions])
-        all_frames_pred = np.concatenate([all_ for single_, all_ in predictions])
+        single_frame_pred = np.concatenate(
+            [single_ for single_, all_ in predictions])
+        all_frames_pred = np.concatenate(
+            [all_ for single_, all_ in predictions])
 
-        return single_frame_pred[:len(frames)], all_frames_pred[:len(frames)]  # remove extra padded frames
+        # remove extra padded frames
+        return single_frame_pred[:len(frames)], all_frames_pred[:len(frames)]
 
     def predict_video(self, video_fn: str):
         try:
@@ -81,9 +88,18 @@ class TransNetV2:
                                       "install python wrapper by `pip install ffmpeg-python`.")
 
         # print("[TransNetV2] Extracting frames from {}".format(video_fn))
-        video_stream, err = ffmpeg.input(video_fn).output(
-            "pipe:", format="rawvideo", pix_fmt="rgb24", s="48x27"
-        ).run(capture_stdout=True, capture_stderr=True)
+        try:
+            video_stream, err = ffmpeg.input(video_fn).output(
+                "pipe:", format="rawvideo", pix_fmt="rgb24", s="48x27"
+            ).run(capture_stdout=True, capture_stderr=True)
+        except ffmpeg.Error as e:
+            print(f"[TransNetV2] FFmpeg error processing video: {video_fn}")
+            print(
+                f"[TransNetV2] FFmpeg stdout: {e.stdout.decode() if e.stdout else 'No stdout'}")
+            print(
+                f"[TransNetV2] FFmpeg stderr: {e.stderr.decode() if e.stderr else 'No stderr'}")
+            raise RuntimeError(
+                f"FFmpeg failed to process video: {video_fn}. Error: {e.stderr.decode() if e.stderr else str(e)}")
 
         video = np.frombuffer(video_stream, np.uint8).reshape([-1, 27, 48, 3])
         # print(video)
@@ -122,13 +138,16 @@ class TransNetV2:
 
         # pad frames so that length of the video is divisible by width
         # pad frames also by len(predictions) pixels in width in order to show predictions
-        pad_with = width - len(frames) % width if len(frames) % width != 0 else 0
-        frames = np.pad(frames, [(0, pad_with), (0, 1), (0, len(predictions)), (0, 0)])
+        pad_with = width - \
+            len(frames) % width if len(frames) % width != 0 else 0
+        frames = np.pad(frames, [(0, pad_with), (0, 1),
+                        (0, len(predictions)), (0, 0)])
 
         predictions = [np.pad(x, (0, pad_with)) for x in predictions]
         height = len(frames) // width
 
-        img = frames.reshape([height, width, ih + 1, iw + len(predictions), ic])
+        img = frames.reshape(
+            [height, width, ih + 1, iw + len(predictions), ic])
         img = np.concatenate(np.split(
             np.concatenate(np.split(img, height), axis=2)[0], width
         ), axis=2)[0, :-1]
@@ -148,7 +167,8 @@ class TransNetV2:
 
                 value = round(p * (ih - 1))
                 if value != 0:
-                    draw.line((x + j, y, x + j, y - value), fill=tuple(color), width=1)
+                    draw.line((x + j, y, x + j, y - value),
+                              fill=tuple(color), width=1)
         return img
 
 
@@ -180,7 +200,8 @@ def transNetV2_run(v_path, image_save, th):
     video_frames, single_frame_predictions, all_frame_predictions = \
         model.predict_video(file)
 
-    predictions = np.stack([single_frame_predictions, all_frame_predictions], 1)
+    predictions = np.stack(
+        [single_frame_predictions, all_frame_predictions], 1)
 
     scenes = model.predictions_to_scenes(single_frame_predictions)
 
@@ -194,16 +215,16 @@ def transNetV2_run(v_path, image_save, th):
     number = getFrame_number("video.txt")
     number.pop()
 
-    frame_save = image_save + "/frame"
+    frame_save = os.path.join(image_save, "frame")
     # 删除旧的分镜
     if not (os.path.exists(image_save)):
-        os.mkdir(image_save)
+        os.makedirs(image_save, exist_ok=True)
     if not (os.path.exists(frame_save)):
-        os.mkdir(frame_save)
+        os.makedirs(frame_save, exist_ok=True)
     else:
-        imgfiles = os.listdir(os.getcwd() + "/" + frame_save)
+        imgfiles = os.listdir(frame_save)
         for f in imgfiles:
-            os.remove(os.getcwd() + "/" + frame_save + "/" + f)
+            os.remove(os.path.join(frame_save, f))
     cap = cv2.VideoCapture(v_path)
     # print(cap)
     frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -240,5 +261,3 @@ def transNetV2_run(v_path, image_save, th):
         img1 = img2
     print("TransNetV2 completed")
     return shot_len
-
-

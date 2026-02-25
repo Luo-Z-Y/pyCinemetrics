@@ -1,5 +1,10 @@
-prototxt_25 = "models/pose/body_25/pose_deploy.prototxt"
-caffemodel_25 = "models/pose/body_25/pose_iter_584000.caffemodel"
+import os
+
+# Resolve project root: src/algorithms -> src -> project root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+prototxt_25 = os.path.join(PROJECT_ROOT, "models", "pose", "body_25", "pose_deploy.prototxt")
+caffemodel_25 = os.path.join(PROJECT_ROOT, "models", "pose", "body_25", "pose_iter_584000.caffemodel")
 
 point_name_25 = ['Nose', 'Neck', 'RShoulder',
                  'RElbow', 'RWrist', 'LShoulder',
@@ -33,8 +38,9 @@ colors_25 = [[255, 0, 0], [255, 85, 0], [255, 170, 0],
              [255, 85, 85], [255, 85, 170], [255, 85, 255],
              [170, 170, 170]]
 
-prototxt_18 = "./models/pose/coco/pose_deploy_linevec.prototxt"
-caffemodel_18 = "./models/pose/coco/pose_iter_440000.caffemodel"
+# COCO (18 keypoints)
+prototxt_18 = os.path.join(PROJECT_ROOT, "models", "pose", "coco", "pose_deploy_linevec.prototxt")
+caffemodel_18 = os.path.join(PROJECT_ROOT, "models", "pose", "coco", "pose_iter_440000.caffemodel")
 
 point_names_18 = ['Nose', 'Neck',
                   'R-Sho', 'R-Elb', 'R-Wr',

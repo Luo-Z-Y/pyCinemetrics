@@ -39,9 +39,11 @@ class ObjectDetection:
         file_list = os.listdir(self.image_path+"/frame/")
         framelist = []
 
-        with open('./src/algorithms/imagenet_classes.txt') as f:
+        # Use absolute path to the imagenet_classes.txt file
+        classes_file_path = os.path.join(
+            os.path.dirname(__file__), 'imagenet_classes.txt')
+        with open(classes_file_path, 'r') as f:
             classes = [line.strip() for line in f.readlines()]
-
         for file_name in file_list:
             if os.path.splitext(file_name)[-1] in ['.jpg', '.png', '.bmp']:
                 img_path = self.image_path+"/frame/"+file_name
@@ -58,12 +60,14 @@ class ObjectDetection:
 
                 for idx in indices[0][:1]:
                     frame_id = file_name[5:-4]
-                    framelist.append([frame_id, (classes[idx], percentage[idx].item())[0]])
+                    framelist.append(
+                        [frame_id, (classes[idx], percentage[idx].item())[0]])
 
         self.object_detection_csv(framelist, self.image_path)
 
     def object_detection_csv(self, framelist, save_path):
-        csv_file = open(os.path.join(save_path, 'objects.csv'), "w+", newline='')
+        csv_file = open(os.path.join(
+            save_path, 'objects.csv'), "w+", newline='')
         name = ['FrameId', 'Top1-Objects']
 
         try:

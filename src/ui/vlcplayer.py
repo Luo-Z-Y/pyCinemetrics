@@ -28,7 +28,7 @@ import sys
 import platform
 import time
 
-from PySide2 import QtWidgets, QtGui, QtCore
+from PySide6 import QtWidgets, QtGui, QtCore
 import os
 import vlc
 
@@ -53,12 +53,14 @@ class VLCPlayer(QtWidgets.QWidget):
         self.init_ui()
         self.is_paused = False
         self.total_time_label = QtWidgets.QLabel(self)
-        self.total_time_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.total_time_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.total_time_label.setFixedWidth(55)
         self.total_time_label.setFixedHeight(20)
 
         self.current_time_label = QtWidgets.QLabel(self)
-        self.current_time_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.current_time_label.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.current_time_label.setFixedWidth(55)
         self.current_time_label.setFixedHeight(20)
         self.hbuttonbox.addWidget(self.current_time_label)
@@ -71,7 +73,7 @@ class VLCPlayer(QtWidgets.QWidget):
 
         # In this widget, the video will be drawn
         if platform.system() == 'Darwin':  # for MacOS
-            self.videoframe = QtWidgets.QMacCocoaViewContainer(0)
+            self.videoframe = QtWidgets.QWidget()
         else:
             self.videoframe = QtWidgets.QFrame()
 
@@ -208,13 +210,15 @@ class VLCPlayer(QtWidgets.QWidget):
 
     def on_video_play_changed(self, pos):
         self.timer.stop()
-        self.mediaplayer.set_position(pos / dict(self.parent.info.properties)['Frame count'])
+        self.mediaplayer.set_position(
+            pos / dict(self.parent.info.properties)['Frame count'])
         self.timer.start()
 
         self.mediaplayer.play()
         self.playbutton.setIcon(self.icons['PAUSE'])
         self.timer.start()
         self.is_paused = False
+
     def update_ui(self):
         '''Updates the user interface'''
 
