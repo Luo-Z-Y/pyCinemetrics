@@ -1,8 +1,8 @@
 [project]
 name = "pycinemetrics"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Desktop computational film analysis toolkit with shot, color, object, subtitle, and shot-scale pipelines."
+readme = "readme.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "easyocr>=1.7.2",
@@ -21,5 +21,32 @@ dependencies = [
     "wordcloud>=1.9.4",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "ruff>=0.13.1",
+]
+
 [tool.uv.sources]
 transnetv2 = { git = "https://github.com/soCzech/TransNetV2" }
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [".venv", "native", "models"]
+
+[tool.ruff.lint]
+select = ["F"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+mypy_path = "src"
+exclude = "(^native/|^models/|^img/)"

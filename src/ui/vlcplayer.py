@@ -24,13 +24,15 @@ Author: Saveliy Yusufov, Columbia University, sy2685@columbia.edu
 Date: 25 December 2018
 '''
 
-import sys
-import platform
-import time
-
-from PySide6 import QtWidgets, QtGui, QtCore
 import os
-import vlc
+import platform
+import sys
+import time
+from pathlib import Path
+
+from PySide6 import QtCore, QtGui, QtWidgets
+
+from helper import resource_path
 
 
 class VLCPlayer(QtWidgets.QWidget):
@@ -41,9 +43,10 @@ class VLCPlayer(QtWidgets.QWidget):
         super().__init__(parent)
 
         self.parent = parent
+        self.vlc = self._load_vlc_module()
 
         # Create a basic vlc instance
-        self.instance = vlc.Instance()
+        self.instance = self.vlc.Instance()
 
         self.media = None
 
@@ -66,6 +69,37 @@ class VLCPlayer(QtWidgets.QWidget):
         self.hbuttonbox.addWidget(self.current_time_label)
         self.hbuttonbox.addWidget(QtWidgets.QLabel("/", self))
         self.hbuttonbox.addWidget(self.total_time_label)
+
+    def _try_set_env_path(self, env_key, candidate):
+        if not candidate:
+            return
+        path = Path(candidate)
+        if path.exists():
+            os.environ.setdefault(env_key, str(path))
+
+    def _configure_vlc_runtime(self):
+        # Explicit overrides let users point to custom VLC installations.
+        self._try_set_env_path("PYTHON_VLC_LIB_PATH", os.environ.get("PYCINEMETRICS_VLC_LIB_PATH"))
+        self._try_set_env_path(
+            "PYTHON_VLC_MODULE_PATH", os.environ.get("PYCINEMETRICS_VLC_PLUGIN_PATH")
+        )
+
+        if platform.system() == "Windows":
+            # Source run: project native folder. Bundle run: PyInstaller extraction path.
+            native_vlc_dir = resource_path("native/vlc-3.0.18-win64")
+            self._try_set_env_path("PYTHON_VLC_LIB_PATH", os.path.join(native_vlc_dir, "libvlc.dll"))
+            self._try_set_env_path("PYTHON_VLC_MODULE_PATH", os.path.join(native_vlc_dir, "plugins"))
+
+    def _load_vlc_module(self):
+        self._configure_vlc_runtime()
+        try:
+            import vlc
+        except Exception as exc:
+            raise RuntimeError(
+                "Unable to initialize python-vlc. Ensure VLC is installed and set "
+                "PYCINEMETRICS_VLC_LIB_PATH/PYCINEMETRICS_VLC_PLUGIN_PATH if needed."
+            ) from exc
+        return vlc
 
     def init_ui(self):
         '''Set up the user interface, signals & slots
@@ -227,8 +261,8 @@ class VLCPlayer(QtWidgets.QWidget):
         # so we must first convert the corresponding media position.
         media_pos = int(self.mediaplayer.get_position() * 2000)
         self.positionslider.setValue(media_pos)
-        total_time = self.mediaplayer.get_length() / 1000  # 总时间（以秒为单位）
-        current_time = self.mediaplayer.get_time() / 1000  # 已经播放的时间（以秒为单位）
+        total_time = self.mediaplayer.get_length() / 1000
+        current_time = self.mediaplayer.get_time() / 1000
 
         total_time_str = time.strftime('%H:%M:%S', time.gmtime(total_time))
         current_time_str = time.strftime('%H:%M:%S', time.gmtime(current_time))

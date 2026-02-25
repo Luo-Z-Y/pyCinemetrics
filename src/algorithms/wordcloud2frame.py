@@ -1,8 +1,8 @@
 import jieba
 import os
+import platform
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-import numpy as np
 import csv
 
 # 三个方法
@@ -12,13 +12,45 @@ class WordCloud2Frame:
     def __init__(self):
         pass
 
+    def resolve_font_path(self):
+        custom_font = os.environ.get("PYCINEMETRICS_WORDCLOUD_FONT")
+        if custom_font and os.path.exists(custom_font):
+            return custom_font
+
+        system_name = platform.system()
+        candidates = []
+        if system_name == "Windows":
+            candidates = [
+                r"C:\Windows\Fonts\simfang.ttf",
+                r"C:\Windows\Fonts\simhei.ttf",
+                r"C:\Windows\Fonts\msyh.ttc",
+            ]
+        elif system_name == "Darwin":
+            candidates = [
+                "/System/Library/Fonts/PingFang.ttc",
+                "/System/Library/Fonts/STHeiti Medium.ttc",
+                "/Library/Fonts/Arial Unicode.ttf",
+            ]
+        else:
+            candidates = [
+                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+                "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            ]
+
+        for path in candidates:
+            if os.path.exists(path):
+                return path
+        return None
+
     def wordfrequency(self, filename):
         # data = np.loadtxt(open(csvfile, "rb"),  skiprows=1, usecols=[1, 1])
         print(filename)
         data = []
         with open(filename) as csvfile:
             csv_reader = csv.reader(csvfile)  # 使用csv.reader读取csvfile中的文件
-            header = next(csv_reader)        # 读取第一行每一列的标题
+            next(csv_reader)  # 读取第一行每一列的标题
             for row in csv_reader:  # 将csv 文件中的数据保存到data中
                 data.append(row[1])  # 选择某一列加入到data数组中
             print(data)
@@ -99,16 +131,18 @@ class WordCloud2Frame:
 
     def plotwordcloud(self, tf_sorted, save_path, save_type):
         print('save_path,save_type', save_path, save_type)
-        font = r'c:\Windows\Fonts\simfang.ttf'
-        wc = WordCloud(font_path=font, width=800, height=600,
-                       background_color='white').generate_from_frequencies(tf_sorted)
+        font = self.resolve_font_path()
+        kwargs = {"width": 800, "height": 600, "background_color": "white"}
+        if font:
+            kwargs["font_path"] = font
+        wc = WordCloud(**kwargs).generate_from_frequencies(tf_sorted)
         plt.clf()
         plt.axes(facecolor='black')
         # plt.style.use("dark_background")
         plt.imshow(wc)
         plt.axis('off')
         # plt.show()
-        plt.savefig(save_path+save_type+".png", color='white')
+        plt.savefig(save_path+save_type+".png", facecolor='white')
         # wc.to_file(save_type+'.png')
 
 
