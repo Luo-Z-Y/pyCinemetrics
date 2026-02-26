@@ -1,18 +1,23 @@
-# Release Guide
+# Release Guide (V2)
 
-This document defines the versioned release flow for this fork.
+This project has shifted to a V2 web + backend architecture.
+
+## Scope
+
+Release artifacts focus on:
+
+1. Backend API (`app/backend`)
+2. Web client (`app/web`)
+3. Algorithm integration under `app/backend/algorithms`
+
+Legacy Windows desktop packaging flow has been removed from the active release process.
 
 ## 1. Pre-release Checks
 
-Run locally before version bumps:
-
 ```bash
-python -m ruff check main.py src/algorithms/wordcloud2frame.py src/ui/vlcplayer.py tests
-python -m mypy main.py src/algorithms/wordcloud2frame.py src/ui/vlcplayer.py
-python -m pytest -q
+python -m compileall app/backend
+node --check app/web/app.js
 ```
-
-Ensure CI is green for the release branch/tag.
 
 ## 2. Version Update
 
@@ -23,49 +28,38 @@ Ensure CI is green for the release branch/tag.
 uv lock
 ```
 
-3. Commit with a release message (for example `release: v0.1.1`).
+## 3. Validate API Contract
 
-## 3. Changelog Snapshot
-
-Summarize:
-
-- user-facing features
-- bug fixes
-- breaking changes
-- migration/setup notes
-
-## 4. Windows Packaging (`packaging/pyinstaller/win64.spec`)
-
-Build from repository root (Windows environment):
+Run locally:
 
 ```bash
-pyinstaller packaging/pyinstaller/win64.spec
+python3 -m uvicorn app.backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-Expected spec behavior:
+Then verify:
 
-- entry script: `src/main.py`
-- includes bundled VLC runtime: `native/vlc-3.0.18-win64/`
-- includes splash/icon resources from `resources/`
+```bash
+curl http://127.0.0.1:8000/api/health
+curl http://127.0.0.1:8000/api/contract
+```
 
-Compatibility note:
+## 4. Validate Web Client
 
-- Legacy path `package/win64.spec` is retained and delegates to the canonical spec.
+Run static server:
 
-Validate packaged app:
+```bash
+python3 -m http.server 4173
+```
 
-1. Launch executable.
-2. Open a video and play.
-3. Run `ShotCut`, `Colors`, and one additional module.
-4. Confirm output files generated under `img/<video_name>/`.
+Open `http://localhost:4173/app/web/` and run one full analysis pass:
+
+1. Import video.
+2. Run analysis.
+3. Confirm all tabs render.
+4. Export JSON + CSV outputs.
 
 ## 5. Tag and Publish
 
-1. Create annotated git tag (for example `v0.1.1`).
+1. Create annotated tag (for example `v0.2.0`).
 2. Push branch and tag.
-3. Publish release notes + packaged artifacts.
-
-## 6. Post-release
-
-- Track regressions from user reports.
-- Backport urgent fixes to a patch release if needed.
+3. Publish release notes including API contract changes.

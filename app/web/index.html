@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cinemetrics V2 Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="bg-shape bg-shape-a"></div>
+  <div class="bg-shape bg-shape-b"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Prototype / UI-first rewrite</p>
+        <h1>Cinemetrics Scene Lab</h1>
+      </div>
+      <p class="subhead">Scene-first film analysis for rough cuts and research clips.</p>
+    </header>
+
+    <div class="workspace">
+      <aside class="control-panel card">
+        <h2>Import & Process</h2>
+
+        <label class="file-drop" for="videoFile">
+          <input id="videoFile" type="file" accept="video/*" />
+          <span class="file-title" id="fileTitle">Drop or choose a video clip</span>
+          <span class="file-meta" id="fileMeta">MP4, MOV, MKV supported by browser codec</span>
+        </label>
+
+        <div class="control-group">
+          <label for="sampleInterval">Sampling interval (sec)</label>
+          <input id="sampleInterval" type="range" min="0.5" max="3" step="0.25" value="1" />
+          <output id="sampleIntervalOut">1.00s</output>
+        </div>
+
+        <div class="control-group">
+          <label for="sceneSensitivity">Scene sensitivity</label>
+          <input id="sceneSensitivity" type="range" min="1" max="10" step="1" value="6" />
+          <output id="sceneSensitivityOut">6</output>
+        </div>
+
+        <div class="control-group">
+          <label for="backendUrl">Backend API URL</label>
+          <input id="backendUrl" type="text" value="http://127.0.0.1:8000/api/analyze" />
+        </div>
+
+        <button id="analyzeBtn" class="cta" disabled>Generate Scene-Centric Analysis</button>
+
+        <div class="quick-actions">
+          <p class="actions-title">Feature Actions</p>
+          <div class="actions-grid">
+            <button id="openShotDataBtn" class="ghost-btn" disabled>Open Detailed Shot Data</button>
+            <button id="openColorBtn" class="ghost-btn" disabled>Open Color Analysis</button>
+            <button id="openObjectsBtn" class="ghost-btn" disabled>Open Object Analysis</button>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <p class="actions-title">Export Outputs</p>
+          <div class="actions-grid">
+            <button id="exportJsonBtn" class="ghost-btn" disabled>Export Analysis JSON</button>
+            <button id="exportScenesCsvBtn" class="ghost-btn" disabled>Export Scenes CSV</button>
+            <button id="exportShotsCsvBtn" class="ghost-btn" disabled>Export Shots CSV</button>
+          </div>
+        </div>
+
+        <div class="status-wrap">
+          <p id="statusText">Waiting for video import...</p>
+          <div class="progress-track" aria-hidden="true">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <video id="previewVideo" controls playsinline muted></video>
+      </aside>
+
+      <main class="analysis-panel card">
+        <nav class="view-tabs" role="tablist" aria-label="Analysis sections">
+          <button class="tab active" data-view="overview">Overview</button>
+          <button class="tab" data-view="shotdata">Detailed Shot Data</button>
+          <button class="tab" data-view="color">Color Analysis</button>
+          <button class="tab" data-view="objects">Object Analysis</button>
+        </nav>
+
+        <section id="view-overview" class="view active" aria-live="polite">
+          <div id="overviewPlaceholder" class="placeholder">
+            Import a clip to generate metadata and scene-level summary.
+          </div>
+          <div id="overviewContent" class="hidden"></div>
+        </section>
+
+        <section id="view-shotdata" class="view">
+          <div id="shotdataPlaceholder" class="placeholder">Run analysis to see shot and scene metrics.</div>
+          <div id="shotdataContent" class="hidden"></div>
+        </section>
+
+        <section id="view-color" class="view">
+          <div id="colorPlaceholder" class="placeholder">Run analysis to render scene-level color wheels.</div>
+          <div id="colorContent" class="hidden"></div>
+        </section>
+
+        <section id="view-objects" class="view">
+          <div id="objectsPlaceholder" class="placeholder">Run analysis to inspect notable props per scene.</div>
+          <div id="objectsContent" class="hidden"></div>
+          <div id="llmDraftWrap" class="hidden">
+            <button id="generateLlmDraftBtn" class="ghost-btn inline">Generate LLM Interpretation Draft</button>
+            <textarea id="llmDraftText" readonly placeholder="Generated scene interpretation draft will appear here..."></textarea>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <video id="analysisVideo" preload="metadata" class="hidden-asset"></video>
+  <canvas id="analysisCanvas" width="160" height="90" class="hidden-asset"></canvas>
+
+  <script src="./app.js"></script>
+</body>
+</html>

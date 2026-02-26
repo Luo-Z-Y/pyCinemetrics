@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# macOS
+.DS_Store
+
+# Generated analysis artifacts
+img/*
+!img/.gitkeep
+
 # C extensions
 *.so
 

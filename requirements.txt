@@ -1,3 +1,0 @@
-# Source of truth is pyproject.toml (+ uv.lock).
-# Keep this file as a compatibility shim for tools expecting requirements.txt.
--e .
